@@ -82,6 +82,10 @@ export PI_MODELS_COLUMNS=context,pricing,score
 export PI_MODELS_COLUMNS=context,score
 ```
 
+Model names are never cut to a fixed width: the name column grows to the
+longest name and the picker widens (up to 160 columns) to keep the details
+visible. On a terminal too narrow for both, the name yields to the details.
+
 ## License
 
 MIT © Ken Taylor

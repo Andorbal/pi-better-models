@@ -67,12 +67,14 @@ export function icon(key: IconKey): string {
 // ── Modal frame ───────────────────────────────────────────────────────────────
 
 const MIN_WIDTH = 40;
-const MAX_WIDTH = 96;
+// Wide enough that long provider/model ids plus pricing + score fit on one
+// row; the frame still shrinks to the terminal on narrower screens.
+const MAX_WIDTH = 160;
 const MARGIN = 4;
 /** 2 border cols + 2 padding spaces */
 const CHROME = 4;
 
-/** Clamp terminal width to a sane modal width (40–96 cols). */
+/** Clamp terminal width to a sane modal width (40–160 cols). */
 export function modalWidth(termWidth: number): number {
 	return Math.min(MAX_WIDTH, Math.max(MIN_WIDTH, termWidth - MARGIN));
 }
