@@ -29,7 +29,7 @@ import {
 	resolveModelsDev,
 } from "./data.ts";
 import { patchOutBuiltinModelCommand } from "./patch-builtin";
-import { frameLines, icon, modalWidth } from "./pretty.ts";
+import { frameLines, icon, modalWidth, overlayWidth } from "./pretty.ts";
 
 // ─── Pure logic (exported for tests) ─────────────────────────────────────────
 
@@ -633,7 +633,12 @@ async function showEnhancedPicker(pi: ExtensionAPI, ctx: ExtensionContext): Prom
 				},
 			};
 		},
-		{ overlay: true },
+		{
+			overlay: true,
+			// Without an explicit width pi-tui gives the overlay 80 columns, which
+			// is what forced long model names to truncate on wide terminals.
+			overlayOptions: { width: overlayWidth(process.stdout.columns ?? 80) },
+		},
 	);
 
 	if (!result) return;

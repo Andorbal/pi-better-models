@@ -79,6 +79,15 @@ export function modalWidth(termWidth: number): number {
 	return Math.min(MAX_WIDTH, Math.max(MIN_WIDTH, termWidth - MARGIN));
 }
 
+/**
+ * Overlay width to request from pi-tui so the modal can actually reach
+ * modalWidth(): overlays default to min(80, terminal) columns regardless of
+ * the terminal size, and render(w) only ever sees the overlay's width.
+ */
+export function overlayWidth(termWidth: number): number {
+	return Math.max(MIN_WIDTH + MARGIN, Math.min(termWidth, MAX_WIDTH + MARGIN));
+}
+
 export interface FrameOptions {
 	width: number;
 	lines: string[];
