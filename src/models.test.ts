@@ -3,6 +3,7 @@ import {
 	benchGrade,
 	getModelDetailColumns,
 	filterModelItems,
+	labelColumnWidth,
 	fmtCost,
 	fmtCtx,
 	MODEL_SELECTION_NEXT_KEY,
@@ -161,6 +162,31 @@ describe("benchGrade", () => {
 	});
 });
 
+
+describe("labelColumnWidth", () => {
+	it("fits the longest label untruncated when the modal has room", () => {
+		// 60-char label, 21-char description, 156-col inner width (160-col modal)
+		expect(labelColumnWidth(60, 21, 156)).toBe(62);
+	});
+
+	it("is not capped by any fixed width", () => {
+		expect(labelColumnWidth(120, 21, 156)).toBe(122);
+	});
+
+	it("yields to the description when the modal is narrow", () => {
+		// 92 inner cols: 92 - 2 (prefix) - 21 (desc) - 3 = 66
+		expect(labelColumnWidth(80, 21, 92)).toBe(66);
+	});
+
+	it("reserves SelectList's 10-column description minimum for short descriptions", () => {
+		// 4-char context column: 92 - 2 - 10 - 3 = 77
+		expect(labelColumnWidth(80, 4, 92)).toBe(77);
+	});
+
+	it("never drops below one column", () => {
+		expect(labelColumnWidth(80, 40, 40)).toBe(1);
+	});
+});
 
 describe("getModelDetailColumns", () => {
 	it("defaults to pricing and score", () => {

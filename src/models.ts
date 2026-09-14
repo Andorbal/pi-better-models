@@ -87,6 +87,24 @@ export type ModelDetailColumn = "context" | "pricing" | "score";
 export const DEFAULT_MODEL_DETAIL_COLUMNS: readonly ModelDetailColumn[] = ["pricing", "score"];
 
 /**
+ * Width of the picker's label column for a list `inner` columns wide.
+ *
+ * Wide enough to show the longest label untruncated whenever the modal has
+ * room; otherwise it yields to the description (pricing/score), which
+ * SelectList hides entirely when fewer than 10 columns remain for it. Long
+ * model ids often differ only in their suffix, so the column is never capped
+ * by a fixed number — only by the modal itself.
+ */
+export function labelColumnWidth(widestLabel: number, widestDesc: number, inner: number): number {
+	const wanted = widestLabel + 2;
+	// "→ " prefix (2) + description + SelectList's "-2 for safety" + 1 gap.
+	// SelectList drops the description outright below 10 columns, so reserve
+	// at least that even for a short one (e.g. PI_MODELS_COLUMNS=context).
+	const available = inner - 2 - Math.max(widestDesc, 10) - 3;
+	return Math.max(1, Math.min(wanted, available));
+}
+
+/**
  * Read the optional metadata-column setting. The default intentionally omits
  * context so pricing and the coding rating remain visible in compact pickers.
  * Invalid/empty configuration falls back to the useful default.
@@ -429,13 +447,13 @@ async function showEnhancedPicker(pi: ExtensionAPI, ctx: ExtensionContext): Prom
 				? items.findIndex((it) => it.value === `${current.provider}/${current.id}`)
 				: 0;
 
-			// Reserve room for context, pricing, and coding score/grade. A very long
-			// provider/model label must not consume the entire primary column or
-			// pi-tui hides the description when fewer than 10 columns remain.
-			// Long provider/model labels truncate so the configured metadata stays
-			// visible. Keep the primary column compact enough for pricing + rating.
+			// The label column is sized per render (see render() below): wide enough
+			// for the longest provider/model label, capped only by what the modal
+			// can hold once the widest description is reserved. SelectList reads
+			// `layout` by reference on every render, so mutating it is enough.
 			const widestLabel = items.reduce((w, it) => Math.max(w, visibleWidth(it.label)), 0);
-			const primaryColumnWidth = Math.min(widestLabel + 2, 40);
+			const widestDesc = items.reduce((w, it) => Math.max(w, visibleWidth(it.description ?? "")), 0);
+			const layout = { minPrimaryColumnWidth: widestLabel + 2, maxPrimaryColumnWidth: widestLabel + 2 };
 
 			const search = new Input();
 			const list = new SelectList(
@@ -448,10 +466,7 @@ async function showEnhancedPicker(pi: ExtensionAPI, ctx: ExtensionContext): Prom
 					scrollInfo: (t) => theme.fg("dim", t),
 					noMatch: (t) => theme.fg("warning", t),
 				},
-				{
-					minPrimaryColumnWidth: primaryColumnWidth,
-					maxPrimaryColumnWidth: primaryColumnWidth,
-				},
+				layout,
 			);
 			if (currentIdx >= 0) list.setSelectedIndex(currentIdx);
 
@@ -530,6 +545,11 @@ async function showEnhancedPicker(pi: ExtensionAPI, ctx: ExtensionContext): Prom
 				render(w: number) {
 					const mw = modalWidth(w);
 					const inner = mw - 4; // CHROME = 2 border + 2 padding
+					layout.minPrimaryColumnWidth = layout.maxPrimaryColumnWidth = labelColumnWidth(
+						widestLabel,
+						widestDesc,
+						inner,
+					);
 					const detailHeader = detailColumns
 						.map((column) =>
 							column === "context"
